@@ -1,26 +1,19 @@
-import os, sys
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-from src.db_connections import con
-from airflow import DAG
+from vocab_utils.db_connections import con
+from vocab_utils.lingua_api import get_definitions
+from vocab_utils.send_slack_message import send_slack_message
+from vocab_utils.scrape_images import scrape_web_images
 from datetime import date, datetime, timezone, timedelta, time as time_time
 from slack import WebClient
-from airflow.operators.python import PythonOperator
 import pandas as pd
 import numpy as np
-from src.scrape_images import scrape_web_images
 import random
 from datetime import timezone, datetime
-from src.lingua_api import get_definitions
-from send_slack_message import send_slack_message
 import difflib
-import nltk
-from nltk.corpus import wordnet
 from airflow.models import Variable
-import logging
-
-log = logging.getLogger(__name__)
+import nltk
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+from nltk.corpus import wordnet
 
 class LearnVocab():
     
@@ -158,31 +151,3 @@ class UsersDeployment:
     def execute_by_user(self):
         for user_id in self.user_df['user_id'].values:
             self.LV.execute_all(user_id)
-
-def send_vocab_message():
-    UD = UsersDeployment()
-    UD.execute_by_user()
-
-
-default_args = {
-    'owner': 'anddy0622@gmail.com',
-    'depends_on_past': False,
-    'email': ['anddy0622@gmail.com'],
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 3,
-    'retry_delay': timedelta(minutes=5),
-}
-
-with DAG(
-    "send_vocab_message_dag",
-    start_date=datetime(2022, 6, 1, 17, 15),
-    default_args=default_args,
-    schedule_interval="0 9 * * *",
-    catchup=False
-) as dag:
-
-    uploading_data = PythonOperator(
-        task_id="send_vocab_message_dag",
-        python_callable=send_vocab_message
-    )
