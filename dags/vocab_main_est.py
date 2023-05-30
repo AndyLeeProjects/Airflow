@@ -1,13 +1,12 @@
-import os, sys
 from vocab_utils.db_connections import con
 from vocab_utils.lingua_api import get_definitions
 from vocab_utils.send_slack_message import send_slack_message
 from vocab_utils.main import LearnVocab, UsersDeployment
 from vocab_utils.scrape_images import scrape_web_images
 from airflow import DAG
-from datetime import date, datetime, timezone, timedelta, time as time_time
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
+from datetime import date, datetime, timezone, timedelta, time as time_time
 import logging
 import nltk
 nltk.download('wordnet')
