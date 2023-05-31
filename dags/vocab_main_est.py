@@ -7,6 +7,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
 from datetime import date, datetime, timezone, timedelta, time as time_time
+import pandas as pd
 import logging
 import nltk
 nltk.download('wordnet')
@@ -14,9 +15,13 @@ nltk.download('wordnet')
 log = logging.getLogger(__name__)
 
 def send_vocab_message():
-    UD = UsersDeployment()
-    UD.execute_by_user()
+    timezone = "EST"
+    user_df = pd.read_sql_query("SELECT * FROM users;", con)
+    est_users = user_df[user_df['timezone'] == timezone]
 
+    for user_id in est_users['user_id']:
+        UD = UsersDeployment()
+        UD.execute_by_user(user_id)
 
 default_args = {
     'owner': 'anddy0622@gmail.com',

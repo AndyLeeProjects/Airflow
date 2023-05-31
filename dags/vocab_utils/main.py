@@ -144,10 +144,8 @@ class LearnVocab():
 
 
 class UsersDeployment:
-    def __init__(self):
-        self.user_df = pd.read_sql_query("SELECT * FROM users;", con)
+    def __init__(self, user_id):
         self.LV = LearnVocab()
         
     def execute_by_user(self):
-        for user_id in self.user_df['user_id'].values:
-            self.LV.execute_all(user_id)
+        self.LV.execute_all(user_id)
