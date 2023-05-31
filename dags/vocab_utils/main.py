@@ -146,7 +146,7 @@ class LearnVocab():
 class UsersDeployment:
     def __init__(self, user_id):
         self.LV = LearnVocab()
-        user_id = self.user_id
+        self.user_id = user_id
         
     def execute_by_user(self):
         self.LV.execute_all(self.user_id)
