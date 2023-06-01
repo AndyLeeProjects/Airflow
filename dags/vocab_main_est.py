@@ -31,13 +31,14 @@ default_args = {
     'email_on_retry': False,
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
+    'timezone': 'EST'
 }
 
 with DAG(
     "send_vocab_message_dag",
     start_date=datetime(2022, 6, 1, 17, 15),
     default_args=default_args,
-    schedule_interval="0 9 * * *",
+    schedule_interval="0 9,12,21 * * *",
     catchup=False
 ) as dag:
 
