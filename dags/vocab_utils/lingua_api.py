@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import wordnet
 from airflow.models import Variable
 
-def get_definitions(vocabs:list):
+def get_definitions(vocabs: list, vocab_origins: list):
     """
     get_definitions()
         Using LinguaAPI, the definitions, examples, synonyms and contexts are gathered.
@@ -12,7 +12,7 @@ def get_definitions(vocabs:list):
 
     """
     vocab_dic = {}
-    for vocab in vocabs:
+    for ind, vocab in enumerate(vocabs):
         
         # DEFINE vocab_info
         # try: Some vocabularies do not have definitions (ex: fugazi)
@@ -36,7 +36,7 @@ def get_definitions(vocabs:list):
             synonyms = None
             examples = None
             audio_url = None
-            
+
         def extract_audio_url(json_data):
             
             try:
@@ -70,8 +70,12 @@ def get_definitions(vocabs:list):
                 synonyms = None
 
             # GET EXAMPLES
+            if vocab_origins[ind] != "":
+                examples = [[vocab_origins[ind]]]
+            else:
+                examples = []
             try:
-                examples = [vocab_dat[j]['senses'][i]['usageExamples']
+                examples += [vocab_dat[j]['senses'][i]['usageExamples']
                             for j in range(len(vocab_dat)) for i in range(len(vocab_dat[j]['senses']))
                             if 'usageExamples' in vocab_dat[j]['senses'][i].keys()]
             except:

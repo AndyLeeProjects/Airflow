@@ -71,7 +71,7 @@ class LearnVocab():
     def update_new_vocabs(self, user_id):
         slack_data = self.client.conversations_history(channel=user_id)
         new_vocabs = []
-        vocab_origins = []
+        self.vocab_origins = []
         
         # Calculate the day difference between today and the inputted vocabs
         ## Find newly added vocabs in the last 3 days
@@ -92,9 +92,9 @@ class LearnVocab():
                 # Append "vocab_origin" (e.g. tree (I like tree))
                 if "(" in vocab and ")" in vocab:
                     v_origin = vocab.split("(")[1].strip(")")
-                    vocab_origins.append(v_origin)
+                    self.vocab_origins.append(v_origin)
                 else:
-                    vocab_origins.append("")
+                    self.vocab_origins.append("")
 
         if list(self.vocab_df['vocab'].values) == []:
             vocab_id_counter = 0
@@ -123,7 +123,7 @@ class LearnVocab():
                                            pd.DataFrame(
                                                {'vocab_id': "V" + f"{vocab_id_counter}".zfill(5), 
                                                 'vocab': vocab, 
-                                                'vocab_origin': vocab_origins[ind],
+                                                'vocab_origin': self.vocab_origins[ind],
                                                 'exposure': 0, 
                                                 'status': "Wait List",
                                                 "img_url1": web_images[0], 
@@ -141,7 +141,7 @@ class LearnVocab():
         self.vocab_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
 
     def send_slack_messages(self, user_id):
-        vocab_dic = get_definitions(self.vocabs_next['vocab'].values)
+        vocab_dic = get_definitions(self.vocabs_next['vocab'].values, self.vocab_origins)
 
         # Add image urls to the dictionary
         img_url_dic = {}
