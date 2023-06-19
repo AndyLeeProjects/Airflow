@@ -87,14 +87,17 @@ class LearnVocab():
         # Check if the vocab is already in the database
         for vocab in added_vocabs:
             if len(vocab.split(' ')) < 6:
-                new_vocabs.append(vocab)
                 
                 # Append "vocab_origin" (e.g. tree (I like tree))
                 if "(" in vocab and ")" in vocab:
                     v_origin = vocab.split("(")[1].strip(")")
                     self.vocab_origins.append(v_origin)
+                    vocab = vocab.split("(")[0].strip()
+
                 else:
-                    self.vocab_origins.append("")
+                    self.vocab_origins.append(None)
+
+                new_vocabs.append(vocab)
 
         if list(self.vocab_df['vocab'].values) == []:
             vocab_id_counter = 0
@@ -103,7 +106,7 @@ class LearnVocab():
 
         # Adding vocabularies first time
         for ind, vocab in enumerate(new_vocabs):
-            
+
             # Check if the word is valid
             if not self.is_valid_word(vocab):
                 closest_word = self.find_closest_word(vocab)
@@ -141,7 +144,7 @@ class LearnVocab():
         self.vocab_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
 
     def send_slack_messages(self, user_id):
-        vocab_dic = get_definitions(self.vocabs_next['vocab'].values, self.vocab_origins)
+        vocab_dic = get_definitions(self.vocabs_next['vocab'].values, self.vocabs_next['vocab_origin'].values)
 
         # Add image urls to the dictionary
         img_url_dic = {}

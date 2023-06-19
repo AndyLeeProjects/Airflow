@@ -3,6 +3,9 @@ import difflib
 import nltk
 from nltk.corpus import wordnet
 from airflow.models import Variable
+import logging
+
+log = logging.getLogger(__name__)
 
 def get_definitions(vocabs: list, vocab_origins: list):
     """
@@ -57,7 +60,7 @@ def get_definitions(vocabs: list, vocab_origins: list):
             definitions = [vocab_dat[j]['senses'][i]['definition']
                             for j in range(len(vocab_dat)) for i in range(len(vocab_dat[j]['senses']))]
             definitions = definitions[:5]
-            
+
             # GET AUDIO URLS
             audio_url = extract_audio_url(data)
 
@@ -70,7 +73,8 @@ def get_definitions(vocabs: list, vocab_origins: list):
                 synonyms = None
 
             # GET EXAMPLES
-            if vocab_origins[ind] != "":
+            logging.info(vocab_origins)
+            if vocab_origins[ind] != None:
                 examples = [[vocab_origins[ind]]]
             else:
                 examples = []
@@ -80,7 +84,7 @@ def get_definitions(vocabs: list, vocab_origins: list):
                             if 'usageExamples' in vocab_dat[j]['senses'][i].keys()]
             except:
                 examples = None
-        
+
         # Collect vocab details
         vocab_dic.setdefault(vocab, []).append({'definitions': definitions,
                                                 'examples': examples,

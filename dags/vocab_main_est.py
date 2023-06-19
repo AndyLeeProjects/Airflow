@@ -30,7 +30,7 @@ default_args = {
     'email': ['anddy0622@gmail.com'],
     'email_on_failure': True,
     'email_on_retry': False,
-    'retries': 3,
+    'retries': 0,
     'retry_delay': timedelta(minutes=5)
 }
 
