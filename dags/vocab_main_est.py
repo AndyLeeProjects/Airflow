@@ -35,7 +35,7 @@ default_args = {
 }
 
 with DAG(
-    "send_vocab_message_dag",
+    "send_vocab_message_dag_est",
     start_date=datetime(2022, 6, 1, 17, 15),
     default_args=default_args,
     schedule_interval="0 12,01 * * *",
@@ -43,6 +43,6 @@ with DAG(
 ) as dag:
 
     uploading_data = PythonOperator(
-        task_id="send_vocab_message_dag",
+        task_id="send_vocab_message_dag_est",
         python_callable=send_vocab_message
     )
