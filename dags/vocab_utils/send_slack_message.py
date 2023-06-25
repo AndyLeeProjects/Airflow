@@ -95,13 +95,6 @@ def send_slack_message(vocab_dic:dict, img_url_dic:dict, client, user_id):
                 header_block,
                 {
                 "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": create_progress_bar_and_audio(exposure, audio_urls)
-                }
-                },
-                {
-                "type": "section",
                 "fields": fields
                 },
                 {
@@ -113,6 +106,19 @@ def send_slack_message(vocab_dic:dict, img_url_dic:dict, client, user_id):
                 "type": "image",
                 "image_url": third_img,
                 "alt_text": "Image 3"
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Memorized 🤩"
+                            },
+                            "value": "memorized"
+                        }
+                    ]
                 }]
 
         return block

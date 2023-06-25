@@ -7,9 +7,9 @@ from slack import WebClient
 import pandas as pd
 import numpy as np
 import random
-from datetime import timezone, datetime
 import difflib
 from airflow.models import Variable
+from vocab_utils.slack_interactive import update_memorized_vocabs
 import nltk
 nltk.download('wordnet')
 nltk.download('omw-1.4')
@@ -31,20 +31,19 @@ class LearnVocab():
         self.num_vocab_sug = 5
 
         # When it reaches the total_exposures, move to "memorized" database for testing
-        self.total_exposures = 7
+        self.exposure_aim = 7
+
+    def extract_memorized(self):
+        update_memorized_vocabs(self.vocab_df)
 
     def update_exposures(self):
 
         # Update the exposure of each vocab
         for i in range(len(self.vocab_df)):
-            if self.vocab_df.loc[i, 'status'] == 'Next' and self.vocab_df.loc[i, 'exposure'] >= self.total_exposures:
-                self.vocab_df.loc[i, 'status'] = 'Memorized'
-                self.vocab_df.loc[i, 'memorized_at_utc'] = datetime.now(timezone.utc)
-
-            elif self.vocab_df.loc[i, 'status'] == 'Next':
+            if self.vocab_df.loc[i, 'status'] == 'Next':
                 self.vocab_df.loc[i, 'exposure'] += 1
                 self.vocab_df.loc[i, 'status'] = 'Wait List'
-    
+
     def update_next_vocabs(self):
         self.vocabs_waitlist = self.vocabs_waitlist.sort_values(by=['exposure'], ascending=False)
         
