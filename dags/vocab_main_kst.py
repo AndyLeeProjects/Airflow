@@ -20,8 +20,10 @@ def send_vocab_message():
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
     kst_users = user_df[user_df['timezone'] == timezone]
 
+    kst_users = []
     if len(kst_users) != 0:
         for user_id in kst_users['user_id']:
+            log.info(user_id)
             UD = UsersDeployment(user_id)
             UD.execute_by_user()
 

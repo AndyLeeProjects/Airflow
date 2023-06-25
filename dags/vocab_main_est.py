@@ -21,6 +21,7 @@ def send_vocab_message():
     est_users = user_df[user_df['timezone'] == timezone]
 
     for user_id in est_users['user_id']:
+        log.info(user_id)
         UD = UsersDeployment(user_id)
         UD.execute_by_user()
 
