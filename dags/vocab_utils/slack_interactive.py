@@ -9,10 +9,10 @@ from spellchecker import SpellChecker
 import os
 import json
 from slack_sdk import WebClient
+import requests
 from slack_sdk.errors import SlackApiError
 
-
-slack_token = Variable.get("slack_credentials_token")
+# slack_token = Variable.get("slack_credentials_token")
 client = WebClient(token=slack_token)
 
 def send_slack_message(channel_id, vocabulary_name):
@@ -57,11 +57,12 @@ def send_slack_message(channel_id, vocabulary_name):
             }
         ]
 
+        payload = {
+            "blocks": blocks
+        }
+
         # Send the Slack message
-        response = client.chat_postMessage(
-            channel=channel_id,
-            blocks=blocks
-        )
+        response = requests.post(webhook_url, json=payload)
 
         # Print the response from Slack API (optional)
         print(response)
@@ -71,8 +72,8 @@ def send_slack_message(channel_id, vocabulary_name):
         print(f"Error sending Slack message: {e.response['error']}")
 
 # Usage: Specify the channel ID and vocabulary name
-channel_id = "C02VDLCB52N"  # Replace with your channel ID
+webhook_url = "https://hooks.slack.com/services/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"
 vocabulary_name = "Timid"
 
 # Send the Slack message
-send_slack_message(channel_id, vocabulary_name)
+send_slack_message(webhook_url, vocabulary_name)

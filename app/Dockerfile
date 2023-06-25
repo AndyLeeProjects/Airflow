@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose the port that the Flask app listens on
-EXPOSE 8080
+EXPOSE 5001
 
 ENTRYPOINT ["python"]
 
