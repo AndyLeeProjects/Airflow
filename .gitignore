@@ -3,4 +3,5 @@ logs/
 __pycache__
 __pycache__/
 secret.py
+dags/vocab_utils/test.ipynb
 test.ipynb
