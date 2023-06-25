@@ -18,11 +18,12 @@ def send_vocab_message():
     timezone = "KST"
     con = create_engine(Variable.get("db_uri_token"))
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
-    est_users = user_df[user_df['timezone'] == timezone]
+    kst_users = user_df[user_df['timezone'] == timezone]
 
-    for user_id in est_users['user_id']:
-        UD = UsersDeployment(user_id)
-        UD.execute_by_user()
+    if len(kst_users) != 0:
+        for user_id in kst_users['user_id']:
+            UD = UsersDeployment(user_id)
+            UD.execute_by_user()
 
 default_args = {
     'owner': 'anddy0622@gmail.com',
