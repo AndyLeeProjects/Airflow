@@ -78,7 +78,7 @@ class LearnVocab():
         two_days_ts = datetime.timestamp(today - timedelta(days = 2))
 
         # Unfold dictionary to get the list of newly added vocabs
-        added_vocabs = [slack_data['messages'][i]['text'] 
+        added_vocabs = [slack_data['messages'][i]['text'].lower()
                         for i in range(len(slack_data['messages'])) 
                         if float(slack_data['messages'][i]['ts']) > two_days_ts
                         and "check out" not in slack_data['messages'][i]['text']]
@@ -158,6 +158,7 @@ class LearnVocab():
         send_slack_message(vocab_dic, img_url_dic, self.client, user_id)
 
     def execute_all(self, user_id):
+        self.extract_memorized()
         self.update_exposures()
         self.update_next_vocabs()
         self.update_new_vocabs(user_id)

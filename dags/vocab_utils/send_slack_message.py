@@ -114,9 +114,9 @@ def send_slack_message(vocab_dic:dict, img_url_dic:dict, client, user_id):
                             "type": "button",
                             "text": {
                                 "type": "plain_text",
-                                "text": "Memorized 🤩"
+                                "text": f"{vocab.capitalize()} Memorized 🤩"
                             },
-                            "value": "memorized"
+                            "value": vocab
                         }
                     ]
                 }]
