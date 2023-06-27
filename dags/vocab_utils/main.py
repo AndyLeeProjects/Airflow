@@ -85,7 +85,8 @@ class LearnVocab():
 
         # Check if the vocab is already in the database
         for vocab in added_vocabs:
-            if len(vocab.split(' ')) < 6 and "*vocabulary:*" not in vocab:
+            vocab = vocab.split(" (")[0]
+            if len(vocab.split(' ')) < 6:
                 
                 # Append "vocab_origin" (e.g. tree (I like tree))
                 if "(" in vocab and ")" in vocab:
