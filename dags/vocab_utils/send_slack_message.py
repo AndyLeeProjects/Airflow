@@ -156,7 +156,7 @@ def send_slack_message(vocab_dic:dict, img_url_dic:dict, client, user_id):
                             "emoji": True
                         },
                         "value": "update_and_analysis",
-                        "url": "https://199.241.139.206:8502/",
+                        "url": "http://199.241.139.206:8502/",
                         "action_id": "button-action"
                     }
                 }]
