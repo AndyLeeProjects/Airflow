@@ -6,3 +6,4 @@ secret.py
 dags/vocab_utils/test.ipynb
 test.ipynb
 .streamlit/
+vocab_streamlit_app/.env

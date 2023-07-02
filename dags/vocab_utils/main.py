@@ -17,13 +17,14 @@ from nltk.corpus import wordnet
 
 class LearnVocab():
     
-    def __init__(self):
+    def __init__(self, user_id):
         self.con = create_engine(Variable.get("db_uri_token"))
         slack_token = Variable.get("slack_credentials_token")
         self.client = WebClient(slack_token)
-        
+
         # Retrieve vocabularies from the database
-        self.vocab_df = pd.read_sql_query("SELECT * FROM my_vocabs;", self.con)
+        self.vocab_df = pd.read_sql_query(f"SELECT * FROM my_vocabs where user_id = '{user_id}';", self.con)
+        self.vocab_rest_df = pd.read_sql_query(f"SELECT * FROM my_vocabs where user_id != '{user_id}';", self.con)
         self.vocabs_next = self.vocab_df[self.vocab_df['status'] == 'Next']
         self.vocabs_waitlist = self.vocab_df[self.vocab_df['status'] == 'Wait List']
 
@@ -86,7 +87,7 @@ class LearnVocab():
         # Check if the vocab is already in the database
         for vocab in added_vocabs:
             vocab_len = vocab.split("(")[0].strip()
-            if len(vocab_len.split(' ')) < 6:
+            if len(vocab_len.split(' ')) < 6 and 'has joined the channel' not in vocab:
                 
                 # Append "vocab_origin" (e.g. tree (I like tree))
                 if "(" in vocab and ")" in vocab:
@@ -141,10 +142,11 @@ class LearnVocab():
                                                 "user_id": user_id}, index=[0])])
 
         # Push it to the database
-        self.vocab_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
+        updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
+        updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
 
-    def send_slack_messages(self, user_id):
-        vocab_dic = get_definitions(self.vocabs_next['vocab'].values, self.vocabs_next['vocab_origin'].values)
+    def send_slack_messages(self, user_id, target_lang):
+        vocab_dic = get_definitions(self.vocabs_next['vocab'].values, self.vocabs_next['vocab_origin'].values, target_lang)
 
         # Add image urls to the dictionary
         img_url_dic = {}
@@ -158,17 +160,18 @@ class LearnVocab():
 
         send_slack_message(vocab_dic, img_url_dic, self.client, user_id)
 
-    def execute_all(self, user_id):
+    def execute_all(self, user_id, target_lang):
         self.extract_memorized()
         self.update_exposures()
         self.update_next_vocabs()
         self.update_new_vocabs(user_id)
-        self.send_slack_messages(user_id)
+        self.send_slack_messages(user_id, target_lang)
 
 class UsersDeployment:
-    def __init__(self, user_id):
-        self.LV = LearnVocab()
+    def __init__(self, user_id, language):
+        self.LV = LearnVocab(user_id)
         self.user_id = user_id
+        self.target_lang = language
 
     def execute_by_user(self):
-        self.LV.execute_all(self.user_id)
+        self.LV.execute_all(self.user_id, self.target_lang)

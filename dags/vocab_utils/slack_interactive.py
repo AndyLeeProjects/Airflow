@@ -53,6 +53,6 @@ def update_memorized_vocabs(vocab_df):
         # Formatting the action_utc_time as a string in the desired datetime format
         formatted_time = action_utc_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
         vocab_df.loc[condition, 'memorized_at_utc'] = formatted_time
-    
+
     # Update vocab_df with the new memorized vocabs
     vocab_df.to_sql('my_vocabs', con=con, if_exists='replace', index=False)

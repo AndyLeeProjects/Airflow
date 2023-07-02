@@ -130,7 +130,7 @@ def send_slack_message(vocab_dic:dict, img_url_dic:dict, client, user_id):
     examples = [vocab_dic[vocab][0]['examples'] for vocab in vocabs]
     audio_urls = [vocab_dic[vocab][0]['audio_url'] for vocab in vocabs]
     img_urls = [img_url_dic[vocab] for vocab in vocabs]
-    
+
     divider_block = {"type": "divider"}
     empty_block = {"type": "section","text": {"type": "plain_text","text": "\n\n"}}
     blocks = []
@@ -140,6 +140,26 @@ def send_slack_message(vocab_dic:dict, img_url_dic:dict, client, user_id):
         blocks += block
         blocks += [divider_block]
         blocks += [empty_block]
+        
+    blocks += [empty_block,
+               {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "Click for User & Vocab Updates and Analysis ✨"
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Go to the Page",
+                            "emoji": True
+                        },
+                        "value": "update_and_analysis",
+                        "url": "https://http://199.241.139.206:8502",
+                        "action_id": "button-action"
+                    }
+                }]
 
     if vocabs != []:
         notification_msg = "Check out the new vocabularies ✨"

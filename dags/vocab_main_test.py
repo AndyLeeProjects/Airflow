@@ -2,11 +2,11 @@ from vocab_utils.lingua_api import get_definitions
 from vocab_utils.send_slack_message import send_slack_message
 from vocab_utils.main import LearnVocab, UsersDeployment
 from vocab_utils.scrape_images import scrape_web_images
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
-from datetime import datetime, timedelta, time as time_time
+from datetime import date, datetime, timezone, timedelta, time as time_time
 import pandas as pd
 import logging
 import nltk
@@ -15,18 +15,17 @@ nltk.download('wordnet')
 log = logging.getLogger(__name__)
 
 def send_vocab_message():
-    timezone = "KST"
     con = create_engine(Variable.get("db_uri_token"))
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
-    kst_users = user_df[user_df['timezone'] == timezone]
+    test_users = user_df[user_df['user'] == "Test"]
 
-    kst_users = []
-    if len(kst_users) != 0:
-        for ind, user_id in enumerate(kst_users['user_id']):
-            language = kst_users[kst_users['user_id'] == user_id]['language'].iloc[0]
-            log.info(user_id)
-            UD = UsersDeployment(user_id, language)
-            UD.execute_by_user()
+    for ind, user_id in enumerate(test_users['user_id']):
+        # Get the language for the user_id
+        log.info(user_id)
+        language = test_users[test_users['user_id'] == user_id]['language'].iloc[0]
+
+        UD = UsersDeployment(user_id, language)
+        UD.execute_by_user()
 
 default_args = {
     'owner': 'anddy0622@gmail.com',
@@ -39,14 +38,14 @@ default_args = {
 }
 
 with DAG(
-    "send_vocab_message_dag_kst",
+    "send_vocab_message_dag_test",
     start_date=datetime(2022, 6, 1, 17, 15),
     default_args=default_args,
-    schedule_interval="0 12,23 * * *",
+    schedule_interval="0 12,01 * * *",
     catchup=False
 ) as dag:
 
     uploading_data = PythonOperator(
-        task_id="send_vocab_message_dag_kst",
+        task_id="send_vocab_message_dag_test",
         python_callable=send_vocab_message
     )

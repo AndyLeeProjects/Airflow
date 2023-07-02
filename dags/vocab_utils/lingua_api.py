@@ -4,10 +4,13 @@ import nltk
 from nltk.corpus import wordnet
 from airflow.models import Variable
 import logging
+from googletrans import Translator
+from langdetect import detect
+from vocab_utils.translate import translate_vocab
 
 log = logging.getLogger(__name__)
 
-def get_definitions(vocabs: list, vocab_origins: list):
+def get_definitions(vocabs: list, vocab_origins: list, target_lang: str):
     """
     get_definitions()
         Using LinguaAPI, the definitions, examples, synonyms and contexts are gathered.
@@ -17,7 +20,7 @@ def get_definitions(vocabs: list, vocab_origins: list):
     vocab_dic = {}
     for ind, vocab in enumerate(vocabs):
         
-        # DEFINE vocab_info
+        # DEFINE vocab_info_dic
         # try: Some vocabularies do not have definitions (ex: fugazi)
         url = "https://lingua-robot.p.rapidapi.com/language/v1/entries/en/" + \
             vocab.lower().strip(' ')
@@ -86,8 +89,15 @@ def get_definitions(vocabs: list, vocab_origins: list):
                 examples = None
 
         # Collect vocab details
-        vocab_dic.setdefault(vocab, []).append({'definitions': definitions,
-                                                'examples': examples,
-                                                'synonyms': synonyms,
-                                                'audio_url': audio_url})
+        vocab_info_dic = {'definitions': definitions,
+                 'examples': examples,
+                 'synonyms': synonyms,
+                 'audio_url': audio_url}
+
+        if target_lang != 'en':
+            translator = Translator()
+            vocab_info_dic = translate_vocab(translator, vocab, 'en', target_lang)
+
+        vocab_dic.setdefault(vocab, []).append(vocab_info_dic)
+
     return vocab_dic

@@ -20,9 +20,12 @@ def send_vocab_message():
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
     est_users = user_df[user_df['timezone'] == timezone]
 
-    for user_id in est_users['user_id']:
+    for ind, user_id in enumerate(est_users['user_id']):
+        # Get the language for the user_id
         log.info(user_id)
-        UD = UsersDeployment(user_id)
+        language = est_users[est_users['user_id'] == user_id]['language'].iloc[0]
+
+        UD = UsersDeployment(user_id, language)
         UD.execute_by_user()
 
 default_args = {
