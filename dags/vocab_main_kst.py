@@ -19,12 +19,12 @@ def send_vocab_message():
     con = create_engine(Variable.get("db_uri_token"))
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
     kst_users = user_df[user_df['timezone'] == timezone]
+    kst_users = kst_users[kst_users["status"] == "Active"]
 
     kst_users = []
     if len(kst_users) != 0:
         for ind, user_id in enumerate(kst_users['user_id']):
             language = kst_users[kst_users['user_id'] == user_id]['language'].iloc[0]
-            log.info(user_id)
             UD = UsersDeployment(user_id, language)
             UD.execute_by_user()
 

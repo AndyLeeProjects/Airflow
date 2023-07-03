@@ -89,15 +89,15 @@ def get_definitions(vocabs: list, vocab_origins: list, target_lang: str):
                 examples = None
 
         # Collect vocab details
-        vocab_info_dic = {'definitions': definitions,
-                 'examples': examples,
-                 'synonyms': synonyms,
-                 'audio_url': audio_url}
+        vocab_info_dic = {vocab: {'definitions': definitions,
+                                  'examples': examples,
+                                  'synonyms': synonyms,
+                                  'audio_url': audio_url}}
 
         if target_lang != 'en':
             translator = Translator()
-            vocab_info_dic = translate_vocab(translator, vocab, 'en', target_lang)
+            vocab_info_dic = translate_vocab(translator, vocab_info_dic, 'en', target_lang)
 
-        vocab_dic.setdefault(vocab, []).append(vocab_info_dic)
+        vocab_dic.setdefault(vocab, []).append(vocab_info_dic[vocab])
 
     return vocab_dic

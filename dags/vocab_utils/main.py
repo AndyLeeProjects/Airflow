@@ -14,6 +14,9 @@ import nltk
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 from nltk.corpus import wordnet
+import logging
+
+log = logging.getLogger(__name__)
 
 class LearnVocab():
     
@@ -23,6 +26,7 @@ class LearnVocab():
         self.client = WebClient(slack_token)
 
         # Retrieve vocabularies from the database
+        self.vocab_all_df = pd.read_sql_query(f"SELECT * FROM my_vocabs;", self.con)
         self.vocab_df = pd.read_sql_query(f"SELECT * FROM my_vocabs where user_id = '{user_id}';", self.con)
         self.vocab_rest_df = pd.read_sql_query(f"SELECT * FROM my_vocabs where user_id != '{user_id}';", self.con)
         self.vocabs_next = self.vocab_df[self.vocab_df['status'] == 'Next']
@@ -35,10 +39,12 @@ class LearnVocab():
         self.exposure_aim = 7
 
     def extract_memorized(self):
-        update_memorized_vocabs(self.vocab_df)
+        updated_vocab_df = update_memorized_vocabs(self.vocab_df)
+        
+        updated_vocab_df = pd.concat([updated_vocab_df, self.vocab_rest_df])
+        updated_vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
 
     def update_exposures(self):
-
         # Update the exposure of each vocab
         for i in range(len(self.vocab_df)):
             if self.vocab_df.loc[i, 'status'] == 'Next':
@@ -76,7 +82,7 @@ class LearnVocab():
         # Calculate the day difference between today and the inputted vocabs
         ## Find newly added vocabs in the last 3 days
         today = datetime.today()
-        two_days_ts = datetime.timestamp(today - timedelta(days = 2))
+        two_days_ts = datetime.timestamp(today - timedelta(days = 40))
 
         # Unfold dictionary to get the list of newly added vocabs
         added_vocabs = [slack_data['messages'][i]['text'].lower()
@@ -103,7 +109,7 @@ class LearnVocab():
         if list(self.vocab_df['vocab'].values) == []:
             vocab_id_counter = 0
         else:
-            vocab_id_counter = int(self.vocab_df["vocab_id"].max().replace("V", ""))
+            vocab_id_counter = int(self.vocab_all_df["vocab_id"].max().replace("V", ""))
 
         # Adding vocabularies first time
         for ind, vocab in enumerate(new_vocabs):
@@ -161,11 +167,18 @@ class LearnVocab():
         send_slack_message(vocab_dic, img_url_dic, self.client, user_id)
 
     def execute_all(self, user_id, target_lang):
+        log.info(f"Updating {user_id}'s Vocabularies ...")
+        log.info("Updating Memorized Vocabularies ...")
         self.extract_memorized()
+        log.info("Updating Exposures ...")
         self.update_exposures()
+        log.info("Updating Next Vocabularies ...")
         self.update_next_vocabs()
+        log.info("Updating New Vocabularies ...")
         self.update_new_vocabs(user_id)
+        log.info("Sending Slack Message ...")
         self.send_slack_messages(user_id, target_lang)
+        log.info("\n")
 
 class UsersDeployment:
     def __init__(self, user_id, language):

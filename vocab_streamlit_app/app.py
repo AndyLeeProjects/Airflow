@@ -65,6 +65,7 @@ class VocabApp():
             country_mod = st.text_input("Country: ", placeholder=user_data['country'].values[0])
             language_mod = st.selectbox("Default Language: ", self.user_df['language'].unique().tolist() + ["Other"])
             timezone_mod = st.selectbox("Timezone: ", self.user_df['timezone'].unique().tolist() + ["Other"])
+            status_mod = st.selectbox("Status: ", ["Active", "Pause", "Inactive"])
 
             user_data['user'] = user_name_mod
             user_data['language'] = language_mod
@@ -85,8 +86,7 @@ class VocabApp():
 
             if submit_change:
                 # Replace the row with the new row
-                updated_at_utc = datetime.now(timezone.utc)
-                user_data['updated_at_utc'] = updated_at_utc
+                user_data['updated_at_utc'] = datetime.now(timezone.utc)
                 self.user_df.loc[self.user_df['user_id'] == user_id] = user_data
                 self.user_df.to_sql('users', self.con, if_exists='replace', index=False)
                 c1, c2, c3 = st.columns(3)
@@ -235,6 +235,27 @@ class VocabApp():
                 c1, c2, c3 = st.columns(3)
                 with c2:
                     st.write("Vocabulary Updated! 🎉")
+
+        st.write("# ")
+        st.write("# ")
+        st.write("# ")
+        st.write("### Delete Vocabulary")
+        with st.expander("Delete a Vocabulary"):
+            user_vocab_and_id = [f"{vocab} ({vocab_id})" for vocab, vocab_id in zip(user_vocabs['vocab'].tolist(), user_vocabs['vocab_id'].tolist())]
+            vocab_to_delete = st.selectbox("Please search or choose a vocabulary to delete: ", user_vocab_and_id, key="vocab_select_delete")
+            try:
+                vocab_id_delete = vocab_to_delete.split("(")[1].split(")")[0]
+                st.table(user_vocabs[user_vocabs['vocab_id'] == vocab_id_delete])
+            except:
+                vocab_id_delete = None
+            self.vocab_df = self.vocab_df[self.vocab_df['vocab_id'] != vocab_id_delete]
+            
+            c1, c2, c3 = st.columns(3)
+            with c2:
+                delete_vocab = st.button("Delete Vocabulary ❌")
+                if delete_vocab:
+                    self.vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
+                    st.write("Vocabulary Deleted! 👍")
 
 
     def vocab_analysis(self):

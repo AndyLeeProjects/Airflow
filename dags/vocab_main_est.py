@@ -19,10 +19,10 @@ def send_vocab_message():
     con = create_engine(Variable.get("db_uri_token"))
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
     est_users = user_df[user_df['timezone'] == timezone]
+    est_users = est_users[est_users["status"] == "Active"]
 
     for ind, user_id in enumerate(est_users['user_id']):
         # Get the language for the user_id
-        log.info(user_id)
         language = est_users[est_users['user_id'] == user_id]['language'].iloc[0]
 
         UD = UsersDeployment(user_id, language)
