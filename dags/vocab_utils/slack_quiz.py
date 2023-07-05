@@ -8,6 +8,7 @@ import json
 import requests
 import pandas as pd
 from slack_sdk.errors import SlackApiError
+from airflow.models import Variable
 from sqlalchemy import create_engine, text
 import openai
 from slack import WebClient
@@ -30,7 +31,7 @@ Also, please make sure you use exactly the word '{target_vocab}' in the example 
 
 def choose_best_example(target_vocab, selection_vocabularies):
     prompt = generate_prompt(target_vocab, selection_vocabularies)
-    openai.api_key = "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"
+    openai.api_key = Variable.get("openai_token")
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
