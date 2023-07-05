@@ -176,7 +176,7 @@ class VocabApp():
         with st.expander("Add New Vocabulary"):
             new_vocab_dic = {}
             new_vocab = st.text_input("Please type in the new vocabulary: ", key="vocab_spelling_new")
-            new_vocab_dic["vocab_origin"] = st.text_input("Please add context to your vocabulary: ", key="vocab_origin_new", placeholder=f"{new_vocab} is ...")
+            new_vocab_dic["vocab_origin"] = st.text_input("Please add context to your vocabulary: ", key="vocab_origin_new")
             new_vocab_dic["vocab"] = new_vocab
             new_vocab_dic["status"] = "Wait List"
             new_vocab_id = max(self.vocab_df['vocab_id'].tolist())
@@ -211,17 +211,30 @@ class VocabApp():
         st.write("# ")
         st.write("### Update Vocabulary")
         vocab_update = st.selectbox("Please search or choose a vocabulary to update: ", user_vocabs['vocab'].tolist(), key="vocab_select_update")
+        try:
+            vocab_origin_update = user_vocabs[user_vocabs['vocab'] == vocab_update]['vocab_origin'].iloc[0]
+        except:
+            vocab_origin_update = f"{vocab_update} is ..."
+        try:
+            vocab_id_update = user_vocabs[user_vocabs['vocab'] == vocab_update]['vocab_id'].iloc[0]
+        except:
+            vocab_id_update = None
+        try:
+            vocab_exposure_update = user_vocabs[user_vocabs['vocab'] == vocab_update]['exposure'].iloc[0]
+        except:
+            vocab_exposure_update = 2
         with st.expander(f"Update Vocabulary: {vocab_update}"):
 
-            new_vocab = st.text_input("Please type in the new vocabulary: ", key="vocab_spelling_update", placeholder=vocab_update)
-            new_vocab_origin = st.text_input("Please type in the new vocabulary origin: ", key="vocab_origin_update", placeholder=f"{vocab_update} is ...")
-            new_exposure = st.number_input("Please type in the new exposure: ", key="vocab_exposure_update", value=2)
+            new_vocab = st.text_input("Please type in the new vocabulary: ", key="vocab_spelling_update", value=vocab_update)
+            new_vocab_origin = st.text_input("Please type in the new vocabulary origin: ", key="vocab_origin_update", value=vocab_origin_update)
+            new_exposure = st.number_input("Please type in the new exposure: ", key="vocab_exposure_update", value=vocab_exposure_update)
             new_status = st.selectbox("Please select the new status: ", ["Memorized", "Wait List", "Next"])
 
             user_vocabs.loc[user_vocabs['vocab_id'] == vocab_id_update, 'vocab'] = new_vocab
             user_vocabs.loc[user_vocabs['vocab_id'] == vocab_id_update, 'vocab_origin'] = new_vocab_origin
             user_vocabs.loc[user_vocabs['vocab_id'] == vocab_id_update, 'exposure'] = new_exposure
             user_vocabs.loc[user_vocabs['vocab_id'] == vocab_id_update, 'status'] = new_status
+            st.table(user_vocabs[user_vocabs['vocab_id'] == vocab_id_update])
 
             col1, col2, col3 = st.columns(3)
             with col2:

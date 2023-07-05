@@ -10,6 +10,8 @@ import random
 import difflib
 from airflow.models import Variable
 from vocab_utils.slack_interactive import update_memorized_vocabs
+from vocab_utils.slack_interactive import update_quizzed_vocabs
+from vocab_utils.slack_quiz import send_slack_quiz
 import nltk
 nltk.download('wordnet')
 nltk.download('omw-1.4')
@@ -31,16 +33,23 @@ class LearnVocab():
         self.vocab_rest_df = pd.read_sql_query(f"SELECT * FROM my_vocabs where user_id != '{user_id}';", self.con)
         self.vocabs_next = self.vocab_df[self.vocab_df['status'] == 'Next']
         self.vocabs_waitlist = self.vocab_df[self.vocab_df['status'] == 'Wait List']
+        self.user_id = user_id
+        # Get vocab_details from the database
+        self.quiz_details_df = pd.read_sql_query("SELECT * FROM quiz_details", self.con)
 
         # Total number of vocabularies for each slack notification
         self.num_vocab_sug = 5
 
         # When it reaches the total_exposures, move to "memorized" database for testing
         self.exposure_aim = 7
+    
+    def get_quiz_results(self):
+        self.vocab_df = update_quizzed_vocabs(self.vocab_df, self.quiz_details_df, self.con)
+        updated_vocab_df = pd.concat([self.vocab_df, self.vocab_rest_df])
+        updated_vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
 
     def extract_memorized(self):
         updated_vocab_df = update_memorized_vocabs(self.vocab_df)
-        
         updated_vocab_df = pd.concat([updated_vocab_df, self.vocab_rest_df])
         updated_vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
 
@@ -151,7 +160,7 @@ class LearnVocab():
         updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
         updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
 
-    def send_slack_messages(self, user_id, target_lang):
+    def send_slack_messages(self, user_id, target_lang, quiz_blocks):
         vocab_dic = get_definitions(self.vocabs_next['vocab'].values, self.vocabs_next['vocab_origin'].values, target_lang)
 
         # Add image urls to the dictionary
@@ -164,10 +173,12 @@ class LearnVocab():
             img_df = self.vocabs_next[self.vocabs_next['vocab'] == vocab][['img_url1', 'img_url2', 'img_url3']]
             img_url_dic[vocab] = img_df.values.tolist()[0]
 
-        send_slack_message(vocab_dic, img_url_dic, self.client, user_id)
+        send_slack_message(self.vocab_df, self.quiz_details_df, vocab_dic, img_url_dic, self.client, user_id, target_lang, quiz_blocks, self.con)
 
     def execute_all(self, user_id, target_lang):
         log.info(f"Updating {user_id}'s Vocabularies ...")
+        log.info("Updating Quiz Results ...")
+        self.get_quiz_results()
         log.info("Updating Memorized Vocabularies ...")
         self.extract_memorized()
         log.info("Updating Exposures ...")
@@ -177,7 +188,12 @@ class LearnVocab():
         log.info("Updating New Vocabularies ...")
         self.update_new_vocabs(user_id)
         log.info("Sending Slack Message ...")
-        self.send_slack_messages(user_id, target_lang)
+        quiz_blocks, self.vocab_df = send_slack_quiz(self.vocab_df, user_id, target_lang, self.con)
+        # quiz_blocks = None means that no quiz was sent
+        if quiz_blocks != None:
+            updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
+            updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
+        self.send_slack_messages(user_id, target_lang, quiz_blocks)
         log.info("\n")
 
 class UsersDeployment:

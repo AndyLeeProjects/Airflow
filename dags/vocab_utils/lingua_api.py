@@ -57,41 +57,44 @@ def get_definitions(vocabs: list, vocab_origins: list, target_lang: str):
                 return None
             return None
 
-        if vocab_dat != None:
-            # GET DEFINITIONS
-            # try: If the definition is not in Lingua Dictionary, output None
+        # GET DEFINITIONS
+        # try: If the definition is not in Lingua Dictionary, output None
+        try:
             definitions = [vocab_dat[j]['senses'][i]['definition']
                             for j in range(len(vocab_dat)) for i in range(len(vocab_dat[j]['senses']))]
             definitions = definitions[:5]
+        except:
+            pass
 
-            # GET AUDIO URLS
-            audio_url = extract_audio_url(data)
+        # GET AUDIO URLS
+        audio_url = extract_audio_url(data)
 
-            # GET SYNONYMS
-            # try: If synonyms are not in Lingua Dictionary, output None
-            try:
-                synonyms = [vocab_dat[j]['synonymSets'][i]['synonyms']
-                            for j in range(len(vocab_dat)) for i in range(len(vocab_dat[j]['synonymSets']))]
-            except KeyError:
-                synonyms = None
+        # GET SYNONYMS
+        # try: If synonyms are not in Lingua Dictionary, output None
+        try:
+            synonyms = [vocab_dat[j]['synonymSets'][i]['synonyms']
+                        for j in range(len(vocab_dat)) for i in range(len(vocab_dat[j]['synonymSets']))]
+        except:
+            synonyms = None
 
-            # GET EXAMPLES
-            logging.info(vocab_origins)
-            if vocab_origins[ind] != None:
-                examples = [[vocab_origins[ind]]]
-            else:
-                examples = []
-            try:
-                examples += [vocab_dat[j]['senses'][i]['usageExamples']
-                            for j in range(len(vocab_dat)) for i in range(len(vocab_dat[j]['senses']))
-                            if 'usageExamples' in vocab_dat[j]['senses'][i].keys()]
-            except:
-                examples = None
+        # GET EXAMPLES
+        if vocab_origins[ind] != None:
+            context = vocab_origins[ind]
+        else:
+            context = None
+
+        try:
+            examples += [vocab_dat[j]['senses'][i]['usageExamples']
+                        for j in range(len(vocab_dat)) for i in range(len(vocab_dat[j]['senses']))
+                        if 'usageExamples' in vocab_dat[j]['senses'][i].keys()]
+        except:
+            examples = None
 
         # Collect vocab details
         vocab_info_dic = {vocab: {'definitions': definitions,
                                   'examples': examples,
                                   'synonyms': synonyms,
+                                  'context': context,
                                   'audio_url': audio_url}}
 
         if target_lang != 'en':

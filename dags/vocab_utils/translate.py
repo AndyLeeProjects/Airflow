@@ -22,9 +22,11 @@ def translate_vocab(translator, vocab_dic, src, dest):
             synonyms_lst = [translator.translate(d, src=src, dest=dest).text for d in details["synonyms"]]
         except:
             synonyms_lst = []
+        print(details["context"])
 
         tranlsated_dic[vocab] = {"definitions": definition_lst,
                                 "examples": example_lst,
                                 "synonyms": synonyms_lst,
+                                "context": details["context"],
                                 "audio_url": details["audio_url"]}
     return tranlsated_dic
