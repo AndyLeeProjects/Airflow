@@ -5,7 +5,8 @@ import pandas as pd
 def interactive_table(data, key):
 
     gb = GridOptionsBuilder.from_dataframe(data)
-    gb.configure_pagination(paginationAutoPageSize=True)  # Add pagination
+    gb.configure_pagination(paginationAutoPageSize=True, enabled=True)  # Add pagination
+
     gb.configure_side_bar()  # Add a sidebar
     # gb.configure_selection(selection_mode="multiple", use_checkbox=True)
     gridOptions = gb.build()
