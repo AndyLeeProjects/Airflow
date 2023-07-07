@@ -15,7 +15,7 @@ nltk.download('wordnet')
 log = logging.getLogger(__name__)
 
 def send_vocab_message():
-    timezone = "KST"
+    dag_timezone = "KST"
     con = create_engine(Variable.get("db_uri_token"))
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
     kst_users = user_df[user_df['timezone'] == timezone]
@@ -25,7 +25,7 @@ def send_vocab_message():
     if len(kst_users) != 0:
         for ind, user_id in enumerate(kst_users['user_id']):
             language = kst_users[kst_users['user_id'] == user_id]['language'].iloc[0]
-            UD = UsersDeployment(user_id, language)
+            UD = UsersDeployment(user_id, language, dag_timezone)
             UD.execute_by_user()
 
 default_args = {

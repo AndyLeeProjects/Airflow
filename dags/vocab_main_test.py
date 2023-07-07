@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 
 def send_vocab_message():
     con = create_engine(Variable.get("db_uri_token"))
+    dag_timezone = "EST"
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
     test_users = user_df[user_df['user'] == "Test"]
 
@@ -24,7 +25,7 @@ def send_vocab_message():
         log.info(user_id)
         language = test_users[test_users['user_id'] == user_id]['language'].iloc[0]
 
-        UD = UsersDeployment(user_id, language)
+        UD = UsersDeployment(user_id, language, dag_timezone)
         UD.execute_by_user()
 
 default_args = {

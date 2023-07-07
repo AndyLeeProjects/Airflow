@@ -13,7 +13,7 @@ from sqlalchemy import create_engine, text
 import openai
 from slack import WebClient
 from vocab_utils.lingua_api import get_definitions
-import random
+import random, string
 import Levenshtein
 
 
@@ -38,7 +38,7 @@ def choose_best_example(target_vocab, selection_vocabularies):
             {"role": "user", "content": prompt},],
         temperature=0.0,
     )
-    content = content = response["choices"][0]["message"]["content"]
+    content = response["choices"][0]["message"]["content"]
 
     return content
 
@@ -63,10 +63,11 @@ def find_best_match(keyword, word_list):
 
     return best_match
 
-def send_slack_quiz(vocab_df, user_id, target_lang, con):
+def send_slack_quiz(vocab_df, quiz_details_df, user_id, target_lang, con):
 
     # Set the quiz target
     quiz_target = vocab_df[vocab_df['quizzed_count'] == vocab_df['quizzed_count'].min()]
+
     # mix quiz_target
     quiz_target = quiz_target.sample(n=1)
     quiz_target = pd.DataFrame(quiz_target)
@@ -153,12 +154,29 @@ def send_slack_quiz(vocab_df, user_id, target_lang, con):
                     "text": "Select Answer",
                     "emoji": True
                 }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Submit",
+                            "emoji": True
+                        },
+                        "value": "submit_button",
+                        "action_id": "button_click",
+                        "style": "primary"
+                    }
+                ]
             }
         ]
 
     user_id = quiz_target["user_id"].iloc[0]
     vocab_id = quiz_target["vocab_id"].iloc[0]
     target_vocab = quiz_target["vocab"].iloc[0]
+    # Randomly generate a quiz_id
     quiz_id = vocab_id + user_id
 
     # Combine vocab_id and user_id to form a unique id

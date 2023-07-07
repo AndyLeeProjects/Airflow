@@ -8,7 +8,7 @@ from vocab_utils.slack_quiz import send_slack_quiz
 import time
 from spellchecker import SpellChecker
 
-def send_slack_message(vocab_df, quiz_details_df, vocab_dic:dict, img_url_dic:dict, client, user_id, target_lang, quiz_blocks, con):
+def send_slack_message(vocab_df, quiz_details_df, vocab_dic:dict, img_url_dic:dict, client, user_id, target_lang, quiz_blocks, review_blocks, con):
     """   
     send_slack_message():
         Organizes vocab data into a clean string format. Then, with Slack API, the string is 
@@ -169,7 +169,7 @@ def send_slack_message(vocab_df, quiz_details_df, vocab_dic:dict, img_url_dic:di
                         "url": "http://199.241.139.206:8502/",
                         "action_id": "button-action"
                     }
-                }]
+                }, empty_block]
     
     # Get the question from quiz_blocks
     if quiz_blocks != None:
@@ -185,6 +185,33 @@ def send_slack_message(vocab_df, quiz_details_df, vocab_dic:dict, img_url_dic:di
         if check_quiz_details_df.empty or check_quiz_details_df["target_vocab"].iloc[0] != check_quiz_details_df["selected_vocab"].iloc[0]:
             blocks += quiz_blocks
             blocks += [empty_block]
+            blocks += [divider_block]
+            blocks += [empty_block]
+            blocks += review_blocks
+            blocks += [empty_block]
+
+    # If the number of vocabs is less than 10, add a instruction block
+    if len(vocab_df) < 10:
+        instruction_block = [
+                empty_block,
+                divider_block,
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Instruction",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*· Format:* `New Vocab (Context for the new vocab)`\n\n*· Example:* `Paint (Johnny likes to paint)`"
+                    }
+                }
+            ]
+        blocks += instruction_block
 
     if vocabs != []:
         notification_msg = "Check out the new vocabularies ✨"

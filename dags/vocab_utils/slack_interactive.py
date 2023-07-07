@@ -11,6 +11,7 @@ from slack_sdk.errors import SlackApiError
 from sqlalchemy import create_engine, text
 from slack import WebClient
 import Levenshtein
+import pytz
 
 def update_memorized_vocabs(vocab_df):
     # Make a GET request to the /payloads endpoint
@@ -57,6 +58,18 @@ def update_memorized_vocabs(vocab_df):
 
     return vocab_df
 
+def get_values(payload, just_selected_option=False):
+    block_id = next(iter(payload['state']['values']))  # Get the first block ID dynamically
+    vocab_id = list(payload['state']['values'][block_id].keys())[0]
+    selected_vocab = payload['state']['values'][block_id][vocab_id]['selected_option']["text"]["text"]
+    if just_selected_option:
+        return selected_vocab
+    
+    action_ts = payload['actions'][0]['action_ts']
+    channel_id = payload['channel']['id']
+
+    return selected_vocab, vocab_id, action_ts, channel_id
+
 
 def update_quizzed_vocabs(vocab_df, quiz_details_df, engine):
 
@@ -68,11 +81,11 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, engine):
         return response.status_code
     # Extract the payloads from the response
     payloads = response.json()
-    quiz_details = pd.DataFrame(columns=["quiz_id", "user_id", "vocab_id", "target_vocab", "selected_vocab", "quiz_content", "quizzed_at_utc", "quiz_submitted_at_utc", "status"])
+    quiz_details = pd.DataFrame(columns=["quiz_id", "user_id", "vocab_id", "target_vocab", "selected_vocab", "quiz_content", "quizzed_at_utc", "quiz_submitted_at_utc", "status", "quiz_result_sent"])
     for payload in payloads:
         # Gget Vocab from the payload
         try:
-            selected_vocab = payload["actions"][0]["selected_option"]["text"]["text"]
+            selected_vocab = get_values(payload, just_selected_option=True)
         except:
             selected_vocab = None
 
@@ -86,10 +99,8 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, engine):
                 pass
 
         if question != None and selected_vocab != None:
-            vocab_id = payload["actions"][0]["action_id"]
-            action_ts = payload["actions"][0]["action_ts"]
+            selected_vocab, vocab_id, action_ts, channel_id = get_values(payload)
             action_ts = datetime.utcfromtimestamp(float(action_ts)).replace(tzinfo=timezone.utc)
-            channel_id = payload["channel"]["id"]
             try:
                 vocab = vocab_df[vocab_df['vocab_id'] == vocab_id]['vocab'].values[0]
 
@@ -103,16 +114,36 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, engine):
                         "quiz_content": [question],
                         "quizzed_at_utc": [None],
                         "quiz_submitted_at_utc": [action_ts],
-                        "status": ["quiz_completed"]
+                        "status": ["quiz_completed"],
+                        "quiz_result_sent": [False]
                     })
 
                     # Concatenate quiz_details_df and quiz_detail
                     quiz_details_df = pd.concat([quiz_details_df, quiz_detail], ignore_index=True)
-                else:
+                
+                elif quiz_details_df.loc[quiz_details_df['quiz_id'] == vocab_id + channel_id, 'status'].values[0] != "quiz_completed":
                     quiz_id = vocab_id + channel_id
                     quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'selected_vocab'] = selected_vocab
                     quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'quiz_submitted_at_utc'] = action_ts
                     quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'status'] = "quiz_completed"
+                
+                else:
+                    quiz_detail = pd.DataFrame({
+                        "quiz_id": [vocab_id + channel_id + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))],
+                        "user_id": [channel_id],
+                        "vocab_id": [vocab_id],
+                        "target_vocab": [vocab],
+                        "selected_vocab": [selected_vocab],
+                        "quiz_content": [question],
+                        "quizzed_at_utc": [None],
+                        "quiz_submitted_at_utc": [action_ts],
+                        "status": ["quiz_completed"],
+                        "quiz_result_sent": [False]
+                    })
+
+                    # Concatenate quiz_details_df and quiz_detail
+                    quiz_details_df = pd.concat([quiz_details_df, quiz_detail], ignore_index=True)
+
 
                 distance = Levenshtein.distance(selected_vocab, vocab)
                 max_length = max(len(selected_vocab), len(vocab))
@@ -128,3 +159,67 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, engine):
 
     return vocab_df
 
+
+def review_previous_quiz_result(quiz_details_df, user_id, timezone, con):
+    
+    def convert_utc_to_timezone(utc_time, target_timezone):
+        # Define the UTC timezone
+        utc_timezone = pytz.timezone('UTC')
+
+        # Check if the UTC time is already timezone-aware
+        if utc_time.tzinfo is None or utc_time.tzinfo.utcoffset(utc_time) is None:
+            # If not timezone-aware, localize it with UTC timezone
+            utc_time = utc_timezone.localize(utc_time)
+
+        # Convert UTC time to the target timezone
+        target_timezone = pytz.timezone(target_timezone)
+        target_time = utc_time.astimezone(target_timezone)
+
+        return target_time
+
+    # Get the recent three quiz results
+    most_recent_quiz_result = quiz_details_df[quiz_details_df['user_id'] == user_id].sort_values(by='quiz_submitted_at_utc', ascending=False).head(3)
+    text_str = "*Answer / Selected  (Submitted at)*\n\n"
+    for ind, row in most_recent_quiz_result.iterrows():
+        target_vocab = row['target_vocab']
+        selected_vocab = row['selected_vocab']
+        date_submitted = row['quiz_submitted_at_utc']
+        
+        # Change the date_submitted to the user's timezone
+        date_submitted = convert_utc_to_timezone(date_submitted, timezone)
+        if target_vocab == selected_vocab:
+            text_str += f"▻ *{target_vocab}* / {selected_vocab} ✅ ({date_submitted.strftime('%Y-%m-%d %H:%M:%S')})\n\n"
+        else:
+            text_str += f"▻ *{target_vocab}* / {selected_vocab} ❌ ({date_submitted.strftime('%Y-%m-%d %H:%M:%S')})\n\n"
+        
+        quiz_details_df.loc[quiz_details_df['quiz_id'] == row['quiz_id'], 'quiz_result_sent'] = True
+    
+    # Get the correct streak
+    correct_streak = 0
+    for ind, row in quiz_details_df[quiz_details_df['user_id'] == user_id].sort_values(by='quiz_submitted_at_utc', ascending=False).iterrows():
+        if row['target_vocab'] == row['selected_vocab']:
+            correct_streak += 1
+        else:
+            break
+        
+    
+    quiz_result_block = [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"Previous Quiz Results 📝 [Streak: {correct_streak}]",
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": text_str
+                    }
+                }
+            ]
+    
+    quiz_details_df.to_sql('quiz_details', con, if_exists='replace', index=False)
+    
+    return quiz_result_block
