@@ -6,6 +6,7 @@ from spellchecker import SpellChecker
 import os
 import json
 import requests
+import string
 import pandas as pd
 from slack_sdk.errors import SlackApiError
 from sqlalchemy import create_engine, text
@@ -71,7 +72,7 @@ def get_values(payload, just_selected_option=False):
     return selected_vocab, vocab_id, action_ts, channel_id
 
 
-def update_quizzed_vocabs(vocab_df, quiz_details_df, engine):
+def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
 
     # Make a GET request to the /payloads endpoint
     response = requests.get('http://199.241.139.206:5001/payloads')
@@ -100,65 +101,65 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, engine):
 
         if question != None and selected_vocab != None:
             selected_vocab, vocab_id, action_ts, channel_id = get_values(payload)
+            print(selected_vocab, vocab_id, action_ts, channel_id)
+            if user_id != channel_id or vocab_id not in list(vocab_df['vocab_id']):
+                continue
+
             action_ts = datetime.utcfromtimestamp(float(action_ts)).replace(tzinfo=timezone.utc)
-            try:
-                vocab = vocab_df[vocab_df['vocab_id'] == vocab_id]['vocab'].values[0]
+            vocab = vocab_df[vocab_df['vocab_id'] == vocab_id]['vocab'].values[0]
+            print(vocab)
 
-                if vocab_id + channel_id not in list(quiz_details_df['quiz_id']):
-                    quiz_detail = pd.DataFrame({
-                        "quiz_id": [vocab_id + channel_id],
-                        "user_id": [channel_id],
-                        "vocab_id": [vocab_id],
-                        "target_vocab": [vocab],
-                        "selected_vocab": [selected_vocab],
-                        "quiz_content": [question],
-                        "quizzed_at_utc": [None],
-                        "quiz_submitted_at_utc": [action_ts],
-                        "status": ["quiz_completed"],
-                        "quiz_result_sent": [False]
-                    })
+            if vocab_id + channel_id not in list(quiz_details_df['quiz_id']):
+                quiz_detail = pd.DataFrame({
+                    "quiz_id": [vocab_id + channel_id],
+                    "user_id": [channel_id],
+                    "vocab_id": [vocab_id],
+                    "target_vocab": [vocab],
+                    "selected_vocab": [selected_vocab],
+                    "quiz_content": [question],
+                    "quizzed_at_utc": [None],
+                    "quiz_submitted_at_utc": [action_ts],
+                    "status": ["quiz_completed"],
+                    "quiz_result_sent": [False]
+                })
 
-                    # Concatenate quiz_details_df and quiz_detail
-                    quiz_details_df = pd.concat([quiz_details_df, quiz_detail], ignore_index=True)
-                
-                elif quiz_details_df.loc[quiz_details_df['quiz_id'] == vocab_id + channel_id, 'status'].values[0] != "quiz_completed":
-                    quiz_id = vocab_id + channel_id
-                    quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'selected_vocab'] = selected_vocab
-                    quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'quiz_submitted_at_utc'] = action_ts
-                    quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'status'] = "quiz_completed"
-                
-                else:
-                    quiz_detail = pd.DataFrame({
-                        "quiz_id": [vocab_id + channel_id + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))],
-                        "user_id": [channel_id],
-                        "vocab_id": [vocab_id],
-                        "target_vocab": [vocab],
-                        "selected_vocab": [selected_vocab],
-                        "quiz_content": [question],
-                        "quizzed_at_utc": [None],
-                        "quiz_submitted_at_utc": [action_ts],
-                        "status": ["quiz_completed"],
-                        "quiz_result_sent": [False]
-                    })
+                # Concatenate quiz_details_df and quiz_detail
+                quiz_details_df = pd.concat([quiz_details_df, quiz_detail], ignore_index=True)
 
-                    # Concatenate quiz_details_df and quiz_detail
-                    quiz_details_df = pd.concat([quiz_details_df, quiz_detail], ignore_index=True)
+            elif quiz_details_df.loc[quiz_details_df['quiz_id'] == vocab_id + channel_id, 'status'].values[0] != "quiz_completed":
+                quiz_id = vocab_id + channel_id
+                quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'selected_vocab'] = selected_vocab
+                quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'quiz_submitted_at_utc'] = action_ts
+                quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'status'] = "quiz_completed"
 
+            else:
+                quiz_detail = pd.DataFrame({
+                    "quiz_id": [vocab_id + channel_id + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))],
+                    "user_id": [channel_id],
+                    "vocab_id": [vocab_id],
+                    "target_vocab": [vocab],
+                    "selected_vocab": [selected_vocab],
+                    "quiz_content": [question],
+                    "quizzed_at_utc": [None],
+                    "quiz_submitted_at_utc": [action_ts],
+                    "status": ["quiz_completed"],
+                    "quiz_result_sent": [False]
+                })
 
-                distance = Levenshtein.distance(selected_vocab, vocab)
-                max_length = max(len(selected_vocab), len(vocab))
-                similarity_percentage = (max_length - distance) / max_length * 100
-                if similarity_percentage >= 70:
-                    vocab_df.loc[vocab_df['vocab_id'] == vocab_id, 'correct_count'] += 1
-                else:
-                    vocab_df.loc[vocab_df['vocab_id'] == vocab_id, 'incorrect_count'] += 1
-            except:
-                pass
+                # Concatenate quiz_details_df and quiz_detail
+                quiz_details_df = pd.concat([quiz_details_df, quiz_detail], ignore_index=True)
+
+            distance = Levenshtein.distance(selected_vocab, vocab)
+            max_length = max(len(selected_vocab), len(vocab))
+            similarity_percentage = (max_length - distance) / max_length * 100
+            if similarity_percentage >= 70:
+                vocab_df.loc[vocab_df['vocab_id'] == vocab_id, 'correct_count'] += 1
+            else:
+                vocab_df.loc[vocab_df['vocab_id'] == vocab_id, 'incorrect_count'] += 1
 
     quiz_details_df.to_sql('quiz_details', engine, if_exists='replace', index=False)
 
     return vocab_df
-
 
 def review_previous_quiz_result(quiz_details_df, user_id, timezone, con):
     
@@ -179,21 +180,22 @@ def review_previous_quiz_result(quiz_details_df, user_id, timezone, con):
 
     # Get the recent three quiz results
     most_recent_quiz_result = quiz_details_df[quiz_details_df['user_id'] == user_id].sort_values(by='quiz_submitted_at_utc', ascending=False).head(3)
+
     text_str = "*Answer / Selected  (Submitted at)*\n\n"
     for ind, row in most_recent_quiz_result.iterrows():
         target_vocab = row['target_vocab']
         selected_vocab = row['selected_vocab']
         date_submitted = row['quiz_submitted_at_utc']
-        
+
         # Change the date_submitted to the user's timezone
         date_submitted = convert_utc_to_timezone(date_submitted, timezone)
         if target_vocab == selected_vocab:
             text_str += f"▻ *{target_vocab}* / {selected_vocab} ✅ ({date_submitted.strftime('%Y-%m-%d %H:%M:%S')})\n\n"
         else:
             text_str += f"▻ *{target_vocab}* / {selected_vocab} ❌ ({date_submitted.strftime('%Y-%m-%d %H:%M:%S')})\n\n"
-        
+
         quiz_details_df.loc[quiz_details_df['quiz_id'] == row['quiz_id'], 'quiz_result_sent'] = True
-    
+
     # Get the correct streak
     correct_streak = 0
     for ind, row in quiz_details_df[quiz_details_df['user_id'] == user_id].sort_values(by='quiz_submitted_at_utc', ascending=False).iterrows():
@@ -201,8 +203,7 @@ def review_previous_quiz_result(quiz_details_df, user_id, timezone, con):
             correct_streak += 1
         else:
             break
-        
-    
+
     quiz_result_block = [
                 {
                     "type": "header",
@@ -219,7 +220,7 @@ def review_previous_quiz_result(quiz_details_df, user_id, timezone, con):
                     }
                 }
             ]
-    
+
     quiz_details_df.to_sql('quiz_details', con, if_exists='replace', index=False)
-    
+
     return quiz_result_block

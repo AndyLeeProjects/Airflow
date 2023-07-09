@@ -20,7 +20,7 @@ import logging
 log = logging.getLogger(__name__)
 
 class LearnVocab():
-    
+
     def __init__(self, user_id):
         self.con = create_engine(Variable.get("db_uri_token"))
         slack_token = Variable.get("slack_credentials_token")
@@ -41,9 +41,9 @@ class LearnVocab():
 
         # When it reaches the total_exposures, move to "memorized" database for testing
         self.exposure_aim = 7
-    
-    def get_quiz_results(self):
-        self.vocab_df = update_quizzed_vocabs(self.vocab_df, self.quiz_details_df, self.con)
+
+    def get_quiz_results(self, user_id):
+        self.vocab_df = update_quizzed_vocabs(self.vocab_df, self.quiz_details_df, user_id, self.con)
         updated_vocab_df = pd.concat([self.vocab_df, self.vocab_rest_df])
         updated_vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
 
@@ -178,7 +178,7 @@ class LearnVocab():
     def execute_all(self, user_id, target_lang, timezone):
         log.info(f"Updating {user_id}'s Vocabularies ...")
         log.info("Updating Quiz Results ...")
-        self.get_quiz_results()
+        self.get_quiz_results(user_id)
         log.info("Updating Memorized Vocabularies ...")
         self.extract_memorized()
         log.info("Updating Exposures ...")
