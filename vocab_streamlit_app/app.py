@@ -61,21 +61,21 @@ class VocabApp():
         st.table(user_data)
         
         with st.expander("Modify User Info"):
-            user_name_mod = st.text_input("Name: ", placeholder=user_name)
-            country_mod = st.text_input("Country: ", placeholder=user_data['country'].values[0])
+            user_name_mod = st.text_input("Name: ", placeholder=user_name, key="name_mod")
+            country_mod = st.text_input("Country: ", placeholder=user_data['country'].values[0], key="country_mod")
             language_mod = st.selectbox("Default Language: ", self.user_df['language'].unique().tolist() + ["Other"])
             timezone_mod = st.selectbox("Timezone: ", self.user_df['timezone'].unique().tolist() + ["Other"])
-            status_mod = st.selectbox("Status: ", ["Active", "Pause", "Inactive"])
+            status_mod = st.selectbox("Status: ", ["Active", "Inactive"])
 
             user_data['user'] = user_name_mod
             user_data['language'] = language_mod
             user_data['timezone'] = timezone_mod
             
             if timezone_mod == "Other":
-                new_timezone = st.text_input("Please type in your timezone: (e.g. EST, PST, etc)")
+                new_timezone = st.text_input("Please type in your timezone: (e.g. EST, PST, etc)", key="timezone_mod")
                 user_data['timezone'] = new_timezone
             if language_mod == "Other":
-                new_language = st.text_input("Please type in your language: (e.g. English, Spanish, etc)")
+                new_language = st.text_input("Please type in your language: (e.g. English, Spanish, etc)", key="language_mod")
                 user_data['language'] = new_language
             
             st.table(user_data)
@@ -94,8 +94,8 @@ class VocabApp():
                     st.write("User info updated! 🎉")
 
         with st.expander("Add New User"):
-            new_user_name = st.text_input("Name: ")
-            new_country = st.text_input("Country: ")
+            new_user_name = st.text_input("Name: ", key="name_new")
+            new_country = st.text_input("Country: ", key="country_new")
             new_language = st.selectbox("Default Language: ", self.user_df['language'].unique().tolist() + ["Other"], key="new_user_lang")
             new_timezone = st.selectbox("Timezone: ", self.user_df['timezone'].unique().tolist() + ["Other"], key="new_user_timezone")
             slack_channel = st.text_input("Slack Channel (User ID): ", key="new_slack_channel")
@@ -108,10 +108,10 @@ class VocabApp():
             new_user['timezone'] = new_timezone
 
             if timezone_mod == "Other":
-                new_timezone = st.text_input("Please type in your timezone: (e.g. EST, PST, etc)")
+                new_timezone = st.text_input("Please type in your timezone: (e.g. EST, PST, etc)", key="timezone_new")
                 new_user['timezone'] = new_timezone
             if language_mod == "Other":
-                new_language = st.text_input("Please type in your language: (e.g. English, Spanish, etc)")
+                new_language = st.text_input("Please type in your language: (e.g. English, Spanish, etc)", key="language_new")
                 new_user['language'] = new_language
             
             st.table(new_user)
