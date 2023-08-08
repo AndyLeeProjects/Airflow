@@ -102,7 +102,7 @@ class LearnVocab():
         for vocab in added_vocabs:
             vocab_len = vocab.split("(")[0].strip()
             if len(vocab_len.split(' ')) < 6 and 'has joined the channel' not in vocab:
-                
+
                 # Append "vocab_origin" (e.g. tree (I like tree))
                 if "(" in vocab and ")" in vocab:
                     v_origin = vocab.split("(")[1].strip(")")

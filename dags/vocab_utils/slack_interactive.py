@@ -69,7 +69,7 @@ def get_values(payload, just_selected_option=False):
     action_ts = payload['actions'][0]['action_ts']
     channel_id = payload['channel']['id']
 
-    return selected_vocab, vocab_id, action_ts, channel_id
+    return selected_vocab, vocab_id, action_ts, channel_id, block_id
 
 
 def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
@@ -82,7 +82,7 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
         return response.status_code
     # Extract the payloads from the response
     payloads = response.json()
-    quiz_details = pd.DataFrame(columns=["quiz_id", "user_id", "vocab_id", "target_vocab", "selected_vocab", "quiz_content", "quizzed_at_utc", "quiz_submitted_at_utc", "status", "quiz_result_sent"])
+    quiz_details = pd.DataFrame(columns=["quiz_id", "user_id", "vocab_id", "target_vocab", "selected_vocab", "quiz_content", "quizzed_at_utc", "quiz_submitted_at_utc", "status", "quiz_result_sent", "block_id"])
     for payload in payloads:
         # Gget Vocab from the payload
         try:
@@ -100,7 +100,7 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
                 pass
 
         if question != None and selected_vocab != None:
-            selected_vocab, vocab_id, action_ts, channel_id = get_values(payload)
+            selected_vocab, vocab_id, action_ts, channel_id, block_id = get_values(payload)
             print(selected_vocab, vocab_id, action_ts, channel_id)
             if user_id != channel_id or vocab_id not in list(vocab_df['vocab_id']):
                 continue
@@ -109,7 +109,8 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
             vocab = vocab_df[vocab_df['vocab_id'] == vocab_id]['vocab'].values[0]
             print(vocab)
 
-            if vocab_id + channel_id not in list(quiz_details_df['quiz_id']):
+            if vocab_id + channel_id not in list(quiz_details_df['quiz_id']) \
+                and block_id not in list(quiz_details_df['block_id']):
                 quiz_detail = pd.DataFrame({
                     "quiz_id": [vocab_id + channel_id],
                     "user_id": [channel_id],
@@ -120,11 +121,13 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
                     "quizzed_at_utc": [None],
                     "quiz_submitted_at_utc": [action_ts],
                     "status": ["quiz_completed"],
-                    "quiz_result_sent": [False]
+                    "quiz_result_sent": [False],
+                    "block_id": [block_id]
                 })
 
                 # Concatenate quiz_details_df and quiz_detail
                 quiz_details_df = pd.concat([quiz_details_df, quiz_detail], ignore_index=True)
+                print("new vocab added to the DB!")
 
             elif quiz_details_df.loc[quiz_details_df['quiz_id'] == vocab_id + channel_id, 'status'].values[0] != "quiz_completed":
                 quiz_id = vocab_id + channel_id
@@ -132,7 +135,7 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
                 quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'quiz_submitted_at_utc'] = action_ts
                 quiz_details_df.loc[quiz_details_df['quiz_id'] == quiz_id, 'status'] = "quiz_completed"
 
-            else:
+            elif block_id not in list(quiz_details_df['block_id']):
                 quiz_detail = pd.DataFrame({
                     "quiz_id": [vocab_id + channel_id + ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))],
                     "user_id": [channel_id],
@@ -143,7 +146,8 @@ def update_quizzed_vocabs(vocab_df, quiz_details_df, user_id, engine):
                     "quizzed_at_utc": [None],
                     "quiz_submitted_at_utc": [action_ts],
                     "status": ["quiz_completed"],
-                    "quiz_result_sent": [False]
+                    "quiz_result_sent": [False],
+                    "block_id": [block_id]
                 })
 
                 # Concatenate quiz_details_df and quiz_detail
