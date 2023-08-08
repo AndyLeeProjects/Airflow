@@ -8,7 +8,7 @@ from vocab_utils.slack_quiz import send_slack_quiz
 import time
 from spellchecker import SpellChecker
 
-def send_slack_message(vocab_df, quiz_details_df, vocab_dic:dict, img_url_dic:dict, client, user_id, target_lang, quiz_blocks, review_blocks, con):
+def send_slack_message(vocab_df, vocab_dic:dict, img_url_dic:dict, client, user_id, target_lang, con):
     """   
     send_slack_message():
         Organizes vocab data into a clean string format. Then, with Slack API, the string is 
@@ -116,20 +116,20 @@ def send_slack_message(vocab_df, quiz_details_df, vocab_dic:dict, img_url_dic:di
                 "type": "image",
                 "image_url": third_img,
                 "alt_text": "Image 3"
-                },
-                {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": f"{vocab.capitalize()} Memorized 🤩"
-                            },
-                            "value": vocab
-                        }
-                    ]
                 }]
+                # {
+                #     "type": "actions",
+                #     "elements": [
+                #         {
+                #             "type": "button",
+                #             "text": {
+                #                 "type": "plain_text",
+                #                 "text": f"{vocab.capitalize()} Memorized 🤩"
+                #             },
+                #             "value": vocab
+                #         }
+                #     ]
+                # }]
 
         return block
     vocabs = list(vocab_dic.keys())
@@ -170,25 +170,25 @@ def send_slack_message(vocab_df, quiz_details_df, vocab_dic:dict, img_url_dic:di
                         "action_id": "button-action"
                     }
                 }, empty_block]
-    
+
     # Get the question from quiz_blocks
-    if quiz_blocks != None:
-        question = quiz_blocks[2]['text']['text']
-        check_quiz_details_df = quiz_details_df[quiz_details_df["quiz_content"] == question]
-        check_quiz_details_df = check_quiz_details_df[check_quiz_details_df["user_id"] == user_id]
+    # if quiz_blocks != None:
+    #     question = quiz_blocks[2]['text']['text']
+    #     check_quiz_details_df = quiz_details_df[quiz_details_df["quiz_content"] == question]
+    #     check_quiz_details_df = check_quiz_details_df[check_quiz_details_df["user_id"] == user_id]
         
-        # Sort by quizzed_at_utc for check_quiz_details_df
-        check_quiz_details_df = check_quiz_details_df.sort_values(by = "quizzed_at_utc", ascending = False)
+    #     # Sort by quizzed_at_utc for check_quiz_details_df
+    #     check_quiz_details_df = check_quiz_details_df.sort_values(by = "quizzed_at_utc", ascending = False)
     
-        # Only send the message if the user hasn't gotten the same quiz
-        ## or if the user got it wrong
-        if check_quiz_details_df.empty or check_quiz_details_df["target_vocab"].iloc[0] != check_quiz_details_df["selected_vocab"].iloc[0]:
-            blocks += quiz_blocks
-            blocks += [empty_block]
-            blocks += [divider_block]
-            blocks += [empty_block]
-            blocks += review_blocks
-            blocks += [empty_block]
+    #     # Only send the message if the user hasn't gotten the same quiz
+    #     ## or if the user got it wrong
+    #     if check_quiz_details_df.empty or check_quiz_details_df["target_vocab"].iloc[0] != check_quiz_details_df["selected_vocab"].iloc[0]:
+    #         blocks += quiz_blocks
+    #         blocks += [empty_block]
+    #         blocks += [divider_block]
+    #         blocks += [empty_block]
+    #         blocks += review_blocks
+    #         blocks += [empty_block]
 
     # If the number of vocabs is less than 10, add a instruction block
     if len(vocab_df) < 10:
