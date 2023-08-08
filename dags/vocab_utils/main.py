@@ -42,15 +42,16 @@ class LearnVocab():
         # When it reaches the total_exposures, move to "memorized" database for testing
         self.exposure_aim = 7
 
-    def get_quiz_results(self, user_id):
-        self.vocab_df = update_quizzed_vocabs(self.vocab_df, self.quiz_details_df, user_id, self.con)
-        updated_vocab_df = pd.concat([self.vocab_df, self.vocab_rest_df])
-        updated_vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
+    # def get_quiz_results(self, user_id):
+    #     self.vocab_df = update_quizzed_vocabs(self.vocab_df, self.quiz_details_df, user_id, self.con)
+    #     updated_vocab_df = pd.concat([self.vocab_df, self.vocab_rest_df])
+    #     updated_vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
 
     def extract_memorized(self):
-        updated_vocab_df = update_memorized_vocabs(self.vocab_df)
-        updated_vocab_df = pd.concat([updated_vocab_df, self.vocab_rest_df])
-        updated_vocab_df.to_sql('my_vocabs', self.con, if_exists='replace', index=False)
+        # If the exposure is greater or equal to self.exposure_aim, change the status to 'Memorized'
+        mask = self.vocab_df['exposure'] >= 7
+        self.vocab_df.loc[mask, 'status'] = 'Memorized'
+
 
     def update_exposures(self):
         # Update the exposure of each vocab
@@ -160,7 +161,7 @@ class LearnVocab():
         updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
         updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
 
-    def send_slack_messages(self, user_id, target_lang, quiz_blocks, review_blocks):
+    def send_slack_messages(self, user_id, target_lang):
         vocab_dic = get_definitions(self.vocabs_next['vocab'].values, self.vocabs_next['vocab_origin'].values, target_lang)
 
         # Add image urls to the dictionary
@@ -173,12 +174,12 @@ class LearnVocab():
             img_df = self.vocabs_next[self.vocabs_next['vocab'] == vocab][['img_url1', 'img_url2', 'img_url3']]
             img_url_dic[vocab] = img_df.values.tolist()[0]
 
-        send_slack_message(self.vocab_df, self.quiz_details_df, vocab_dic, img_url_dic, self.client, user_id, target_lang, quiz_blocks, review_blocks, self.con)
+        send_slack_message(self.vocab_df, vocab_dic, img_url_dic, self.client, user_id, target_lang, self.con)
 
     def execute_all(self, user_id, target_lang, timezone):
         log.info(f"Updating {user_id}'s Vocabularies ...")
         log.info("Updating Quiz Results ...")
-        self.get_quiz_results(user_id)
+        # self.get_quiz_results(user_id)
         log.info("Updating Memorized Vocabularies ...")
         self.extract_memorized()
         log.info("Updating Exposures ...")
@@ -188,13 +189,13 @@ class LearnVocab():
         log.info("Updating New Vocabularies ...")
         self.update_new_vocabs(user_id)
         log.info("Sending Slack Message ...")
-        quiz_blocks, self.vocab_df = send_slack_quiz(self.vocab_df, self.quiz_details_df, user_id, target_lang, self.con)
-        review_blocks = review_previous_quiz_result(self.quiz_details_df, user_id, timezone, self.con)
+        # quiz_blocks, self.vocab_df = send_slack_quiz(self.vocab_df, self.quiz_details_df, user_id, target_lang, self.con)
+        # review_blocks = review_previous_quiz_result(self.quiz_details_df, user_id, timezone, self.con)
         # quiz_blocks = None means that no quiz was sent
-        if quiz_blocks != None:
-            updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
-            updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
-        self.send_slack_messages(user_id, target_lang, quiz_blocks, review_blocks)
+        # if quiz_blocks != None:
+        #     updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
+        #     updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
+        self.send_slack_messages(user_id, target_lang)
         log.info("\n")
 
 class UsersDeployment:

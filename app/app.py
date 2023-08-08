@@ -30,6 +30,9 @@ def slack_interactive():
     # Append the payload to the list
     payloads.append(payload)
 
+    while len(payloads) > 100:
+        payloads.pop(0)  # Remove the oldest payload
+
     response = {
         'payloads': payloads
     }
