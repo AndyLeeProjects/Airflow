@@ -5,8 +5,6 @@ from vocab_utils.scrape_images import scrape_web_images
 from datetime import date, datetime, timezone, timedelta, time as time_time
 from slack import WebClient
 import pandas as pd
-import numpy as np
-import random
 import difflib
 from airflow.models import Variable
 from vocab_utils.slack_interactive import update_memorized_vocabs, update_quizzed_vocabs, review_previous_quiz_result
