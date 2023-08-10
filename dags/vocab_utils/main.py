@@ -1,14 +1,12 @@
 from vocab_utils.lingua_api import get_definitions
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from vocab_utils.send_slack_message import send_slack_message
 from vocab_utils.scrape_images import scrape_web_images
-from datetime import date, datetime, timezone, timedelta, time as time_time
+from datetime import datetime, timezone, timedelta
 from slack import WebClient
 import pandas as pd
 import difflib
 from airflow.models import Variable
-from vocab_utils.slack_interactive import update_memorized_vocabs, update_quizzed_vocabs, review_previous_quiz_result
-from vocab_utils.slack_quiz import send_slack_quiz
 import nltk
 nltk.download('wordnet')
 nltk.download('omw-1.4')

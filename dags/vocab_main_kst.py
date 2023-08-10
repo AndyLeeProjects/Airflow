@@ -2,13 +2,13 @@ from vocab_utils.main import UsersDeployment
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import logging
 
 log = logging.getLogger(__name__)
 
 def send_vocab_message():
-    from sqlalchemy import create_engine, text
+    from sqlalchemy import create_engine
     import pandas as pd
     dag_timezone = "KST"
     con = create_engine(Variable.get("db_uri_token"))
