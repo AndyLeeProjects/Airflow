@@ -1,13 +1,4 @@
 # Send a Message using Slack API
-from cgitb import text
-import random
-import numpy as np
-from slack import WebClient
-from datetime import datetime, date, timedelta
-from vocab_utils.slack_quiz import send_slack_quiz
-import time
-from spellchecker import SpellChecker
-
 def send_slack_message(vocab_df, vocab_dic:dict, img_url_dic:dict, client, user_id, target_lang, con):
     """   
     send_slack_message():

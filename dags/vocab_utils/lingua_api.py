@@ -1,11 +1,8 @@
-import requests, json
-import difflib
-import nltk
-from nltk.corpus import wordnet
+import requests
+import json
 from airflow.models import Variable
 import logging
 from googletrans import Translator
-from langdetect import detect
 from vocab_utils.translate import translate_vocab
 
 log = logging.getLogger(__name__)

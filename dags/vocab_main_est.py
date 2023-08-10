@@ -2,22 +2,22 @@ from vocab_utils.main import UsersDeployment
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import logging
 
 log = logging.getLogger(__name__)
 
 def send_vocab_message():
-    from sqlalchemy import create_engine, text
+    from sqlalchemy import create_engine
     import pandas as pd
     dag_timezone = "EST"
     con = create_engine(Variable.get("db_uri_token"))
     user_df = pd.read_sql_query("SELECT * FROM users;", con)
     est_users = user_df[user_df['timezone'] == dag_timezone]
-    
+
     # Only include Active users
     est_users = est_users[est_users["status"] == "Active"]
-    
+
     # Exclude Test user
     est_users = est_users[est_users["user"] != "Test"]
 
