@@ -42,7 +42,7 @@ with DAG(
     "send_vocab_message_dag_est",
     start_date=datetime(2022, 6, 1, 17, 15),
     default_args=default_args,
-    schedule_interval="0 12,01 * * *",
+    schedule="0 12,01 * * *",
     catchup=False
 ) as dag:
 

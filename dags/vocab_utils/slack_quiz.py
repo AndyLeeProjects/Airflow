@@ -1,19 +1,8 @@
 import random
-import numpy as np
-from datetime import datetime, date, timedelta, timezone
-import time
-from spellchecker import SpellChecker
-import os
-import json
-import requests
+from datetime import datetime, timezone
 import pandas as pd
-from slack_sdk.errors import SlackApiError
 from airflow.models import Variable
-from sqlalchemy import create_engine, text
 import openai
-from slack import WebClient
-from vocab_utils.lingua_api import get_definitions
-import random, string
 import Levenshtein
 
 
