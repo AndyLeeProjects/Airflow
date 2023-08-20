@@ -162,6 +162,7 @@ class LearnVocab():
                                                 "user_id": user_id}, index=[0])])
 
         # Push it to the database
+        import pandas as pd
         updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
         updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
 
