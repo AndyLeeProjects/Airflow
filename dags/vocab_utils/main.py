@@ -7,7 +7,6 @@ from slack import WebClient
 import pandas as pd
 import difflib
 from airflow.models import Variable
-import nltk
 from nltk.corpus import wordnet
 import logging
 
