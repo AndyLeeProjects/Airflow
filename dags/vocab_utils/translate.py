@@ -11,7 +11,7 @@ def translate_vocab(translator, vocab_dic, src, dest):
                 definition_lst.append(definition)
         except:
             definition_lst = []
-        
+
         definition = translator.translate(vocab, src=src, dest=dest).text
         deitinition_lst = [definition] + definition_lst
         try:

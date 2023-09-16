@@ -3,6 +3,14 @@ from vocab_utils.send_slack_message import send_slack_message
 from vocab_utils.scrape_images import scrape_web_images
 from datetime import datetime, timezone, timedelta
 import logging
+import pandas as pd
+from sqlalchemy import create_engine
+from airflow.models import Variable
+from slack import WebClient
+import difflib
+import nltk
+nltk.download('wordnet', quiet=True)
+from nltk.corpus import wordnet
 
 log = logging.getLogger(__name__)
 
@@ -10,17 +18,12 @@ class LearnVocab():
 
     def __init__(self, user_id):
 
-        from sqlalchemy import create_engine
-        from airflow.models import Variable
-
         self.con = create_engine(Variable.get("db_uri_token"))
         slack_token = Variable.get("slack_credentials_token")
 
-        from slack import WebClient
         self.client = WebClient(slack_token)
 
         # Retrieve vocabularies from the database
-        import pandas as pd
         self.vocab_all_df = pd.read_sql_query(f"SELECT * FROM my_vocabs;", self.con)
         self.vocab_df = pd.read_sql_query(f"SELECT * FROM my_vocabs where user_id = '{user_id}';", self.con)
         self.vocab_rest_df = pd.read_sql_query(f"SELECT * FROM my_vocabs where user_id != '{user_id}';", self.con)
@@ -67,17 +70,11 @@ class LearnVocab():
 
     def is_valid_word(self, word):
         # Lazy loading of nltk and wordnet within the method.
-        import nltk
-        nltk.download('wordnet', quiet=True)
-        from nltk.corpus import wordnet
-        
         if wordnet.synsets(word):
             return True
         return False
 
     def find_closest_word(self, word):
-        import nltk
-        import difflib
         nltk.download('wordnet', quiet=True)
         from nltk.corpus import wordnet
 
@@ -162,7 +159,6 @@ class LearnVocab():
                                                 "user_id": user_id}, index=[0])])
 
         # Push it to the database
-        import pandas as pd
         updated_df = pd.concat([self.vocab_rest_df, self.vocab_df])
         updated_df.to_sql('my_vocabs', con=self.con, if_exists='replace', index=False)
 
