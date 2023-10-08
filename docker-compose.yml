@@ -120,10 +120,10 @@ services:
       - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+      interval: 60s        # Check every 60 seconds
+      timeout: 20s         # Wait 20 seconds before considering it a fail
+      retries: 6           # Allow 6 consecutive failures
+      start_period: 300s   # Ignore failures for the first 120 seconds
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
