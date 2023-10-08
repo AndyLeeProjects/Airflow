@@ -8,4 +8,3 @@ RUN pip install --no-cache-dir numpy==1.21.6 \
     slack_sdk==3.19.5 slackclient==2.9.4 pyspellchecker==0.7.0 gitpython==3.1.24 \
     googletrans==3.1.0a0 langdetect==1.0.9 flask_limiter==3.3.1 openai==0.27.8 python_Levenshtein==0.21.1 \
     pytz==2023.3
-

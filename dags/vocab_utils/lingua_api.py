@@ -41,7 +41,6 @@ def get_definitions(vocabs: list, vocab_origins: list, target_lang: str):
             audio_url = None
 
         def extract_audio_url(json_data):
-            
             try:
                 json_data = data['entries']
                 for entry in json_data:
