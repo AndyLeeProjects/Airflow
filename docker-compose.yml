@@ -123,7 +123,7 @@ services:
       interval: 60s        # Check every 60 seconds
       timeout: 20s         # Wait 20 seconds before considering it a fail
       retries: 6           # Allow 6 consecutive failures
-      start_period: 300s   # Ignore failures for the first 120 seconds
+      start_period: 300s   # Ignore failures for the first 300 seconds
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
@@ -317,15 +317,15 @@ services:
       - POSTGRES_PASSWORD=vocab2023!
       - POSTGRES_DB=199.241.139.206
 
-  # # Streamlit App
-  # streamlit_app:
-  #   container_name: vocab_streamlit_app
-  #   build: ./vocab_streamlit_app
-  #   ports:
-  #     - '8502:8502'
-  #   volumes:
-  #     - ./vocab_streamlit_app:/home/src/
-  #   restart: on-failure
+  # Streamlit App
+  streamlit_app:
+    container_name: vocab_streamlit_app
+    build: ./vocab_streamlit_app
+    ports:
+      - '8502:8502'
+    volumes:
+      - ./vocab_streamlit_app:/home/src/
+    restart: on-failure
 
 
 volumes:
