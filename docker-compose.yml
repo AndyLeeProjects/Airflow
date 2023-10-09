@@ -115,6 +115,9 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
+    environment:
+      GUNICORN_TIMEOUT: "240"
+      <<: *airflow-common-env
     command: webserver
     ports:
       - "8080:8080"
