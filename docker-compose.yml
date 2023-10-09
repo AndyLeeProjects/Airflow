@@ -296,17 +296,17 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
-  flask_app:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-    restart: always
-    ports:
-      - '5001:5001'
-    depends_on:
-      - postgres
-    environment:
-      - DATABASE_URL=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+  # flask_app:
+  #   build:
+  #     context: ./app
+  #     dockerfile: Dockerfile
+  #   restart: always
+  #   ports:
+  #     - '5001:5001'
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - DATABASE_URL=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
 
   vocab_postgres:
     image: postgres:13
@@ -327,7 +327,6 @@ services:
     volumes:
       - ./vocab_streamlit_app:/home/src/
     restart: on-failure
-
 
 volumes:
   postgres-db-volume:
